@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Badaga / KBaduga Script Typing</title>
+  <style>
+    @font-face {
+      font-family: 'KBaduga3';
+      src: url('KBaduga3.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root{ --bg:#f7f8fb; --card:#ffffff; --muted:#6b7280; --accent:#0f172a; }
+    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); margin:0; padding:28px;}
+    .container{max-width:1100px;margin:0 auto;}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.06);}
+    .row{display:flex;gap:18px}
+    .col{flex:1}
+
+    textarea{width:100%;height:220px;border:1px solid #e6e9ef;border-radius:8px;padding:12px;font-size:18px;resize:vertical}
+
+    .preview{min-height:220px;border:1px dashed #e6e9ef;border-radius:8px;padding:16px;display:flex;align-items:center;justify-content:center;}
+    .preview .text{font-family:'KBaduga3', system-ui; font-size:34px; line-height:1.4; text-align:center;}
+
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    button{border:0;padding:10px 14px;border-radius:8px;background:#0b5fff;color:white;cursor:pointer}
+    button.ghost{background:transparent;color:#0b5fff;border:1px solid #dbe6ff}
+    .note{font-size:13px;color:var(--muted);margin-top:10px}
+    footer{margin-top:18px;font-size:13px;color:var(--muted)}
+
+    /* Keyboard */
+    .kbd-wrap{margin-top:18px}
+    .kbd-tabs{display:flex;gap:8px;margin-bottom:12px}
+    .kbd-tabs button{padding:8px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer}
+    .keyboard{display:flex;flex-wrap:wrap;gap:8px}
+    .key{padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;min-width:46px;min-height:44px;display:flex;align-items:center;justify-content:center;font-family:'KBaduga3',sans-serif !important;font-size:20px;color:#111}
+    .key.wide{min-width:96px}
+    .key.operator{background:#eef2ff;border-color:#c7ddff}
+
+    @media (max-width:920px){.row{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo" style="width:56px;height:56px;background:linear-gradient(135deg,#eef2ff,#f0fdf4);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0b5fff">KB</div>
+      <div>
+        <h1>Badaga / KBaduga script typing</h1>
+        <p class="lead">Type in Hindi (Devanagari) or English — the preview will render using the KBaduga3 font.</p>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="row">
+        <div class="col">
+          <label for="inputText"><strong>Type (Hindi or English)</strong></label>
+          <textarea id="inputText" placeholder="Type Hindi (Devanagari) text here — e.g., नमस्ते दुनिया"></textarea>
+
+          <div class="controls">
+            <button id="copyPreview">Copy preview to clipboard</button>
+            <button class="ghost" id="downloadPng">Download preview as PNG</button>
+            <button class="ghost" id="downloadTxt">Download as .txt</button>
+            <button class="ghost" id="clearBtn">Clear</button>
+          </div>
+
+          <div class="kbd-wrap">
+            <div class="kbd-tabs">
+              <button data-tab="vowels">Vowels</button>
+              <button data-tab="cons">Consonants</button>
+              <button data-tab="matras">Matras (vowel signs)</button>
+              <button data-tab="akshara">Akshara (quick)</button>
+            </div>
+
+            <div id="keyboard" class="keyboard" aria-hidden="false">
+              <!-- keys injected by JS -->
+            </div>
+          </div>
+
+          <p class="note">Important: this script/font works best with Hindi (Devanagari) input, but English typing is also allowed. If you type romanized text it won't map automatically to Badaga glyphs. Use the on-screen keyboard or your system input for Devanagari.</p>
+        </div>
+
+        <div class="col">
+          <label><strong>Preview (uses KBaduga3.ttf)</strong></label>
+          <div class="preview" id="preview">
+            <div class="text" id="previewText">नमस्ते दुनिया</div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <strong>How to use</strong>
+        <ol>
+          <li>Place the font file <code>KBaduga3.ttf</code> in the same folder as this HTML file.</li>
+          <li>Open this file (index.html) in Chrome/Edge/Firefox — the preview pane will render typed Hindi text using the custom font.</li>
+          <li>If the font doesn't appear, serve the folder via a simple local web server (e.g., <code>python -m http.server</code>).</li>
+        </ol>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Elements
+    const ta = document.getElementById('inputText');
+    const previewText = document.getElementById('previewText');
+
+    // Update preview live
+    ta.addEventListener('input', () => previewText.textContent = ta.value || 'नमस्ते दुनिया');
+
+    // Controls
+    document.getElementById('clearBtn').addEventListener('click', () => { ta.value=''; ta.dispatchEvent(new Event('input')); });
+    document.getElementById('copyPreview').addEventListener('click', async () => {
+      try{ await navigator.clipboard.writeText(previewText.textContent); alert('Copied preview text to clipboard'); }
+      catch(e){ alert('Copy failed — your browser may block clipboard from this page.'); }
+    });
+    document.getElementById('downloadTxt').addEventListener('click', () => {
+      const blob = new Blob([previewText.textContent], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'typed-badaga.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('downloadPng').addEventListener('click', () => {
+      const text = previewText.textContent || '';
+      const fontSize = 48;
+      const tmp = document.createElement('canvas'); const ctx = tmp.getContext('2d'); ctx.font = fontSize + "px 'KBaduga3', sans-serif";
+      const lines = text.split('\n'); let maxWidth = 0; for(const l of lines){ const m = ctx.measureText(l).width; if(m>maxWidth) maxWidth=m; }
+      const padding = 40; const w = Math.ceil(maxWidth + padding*2) || 300; const h = Math.ceil(lines.length*(fontSize*1.4) + padding*2) || 200;
+      const c = document.createElement('canvas'); c.width=w; c.height=h; const cctx = c.getContext('2d'); cctx.fillStyle='#fff'; cctx.fillRect(0,0,w,h);
+      cctx.fillStyle='#000'; cctx.textAlign='center'; cctx.textBaseline='middle'; cctx.font = fontSize + "px 'KBaduga3', sans-serif";
+      const startY = padding + fontSize/2; for(let i=0;i<lines.length;i++){ const y = startY + i*(fontSize*1.4); cctx.fillText(lines[i], w/2, y); }
+      const link = document.createElement('a'); link.href = c.toDataURL('image/png'); link.download = 'badaga-preview.png'; document.body.appendChild(link); link.click(); link.remove();
+    });
+
+    // ----- SMART KEYBOARD DATA -----
+    const VOWELS = ['अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ','अं','अः'];
+    const CONSONANTS = ['क','ख','ग','घ','ङ','च','छ','ज','झ','ञ','ट','ठ','ड','ढ','ण','त','थ','द','ध','न','प','फ','ब','भ','म','य','र','ल','व','श','ष','स','ह','क्ष','त्र','ज्ञ'];
+    // matras are vowel signs that combine with preceding consonant
+    const MATRAS = ['ा','ि','ी','ु','ू','े','ै','ो','ौ','ं','ः','्','ँ'];
+
+    const AKSHARA_QUICK = [
+      // quick common akshara combos for fast input
+      'का','कि','की','कु','कू','के','को',
+      'खा','गा','जा','टा','रा','पा','मा','या','ला','वा'
+    ];
+
+    // Build keyboard UI
+    const keyboard = document.getElementById('keyboard');
+
+    const tabs = document.querySelectorAll('.kbd-tabs button');
+    let activeTab = 'vowels';
+    function renderTab(tab){
+      activeTab = tab; keyboard.innerHTML='';
+      let list = [];
+      if(tab==='vowels') list = VOWELS;
+      else if(tab==='cons') list = CONSONANTS;
+      else if(tab==='matras') list = MATRAS;
+      else if(tab==='akshara') list = AKSHARA_QUICK;
+
+      // add keys
+      list.forEach(ch=>{
+        const b = document.createElement('div'); b.className='key'; b.textContent = ch; b.onclick = () => insertChar(ch);
+        keyboard.appendChild(b);
+      });
+
+      // add control keys
+      const sp = document.createElement('div'); sp.className='key wide operator'; sp.textContent='Space'; sp.onclick = () => insertChar(' '); keyboard.appendChild(sp);
+      const bk = document.createElement('div'); bk.className='key wide operator'; bk.textContent='Backspace'; bk.onclick = () => backspace(); keyboard.appendChild(bk);
+      const cl = document.createElement('div'); cl.className='key wide operator'; cl.textContent='Clear'; cl.onclick = () => { ta.value=''; ta.dispatchEvent(new Event('input')); }; keyboard.appendChild(cl);
+    }
+
+    tabs.forEach(t=> t.addEventListener('click', ()=>{ renderTab(t.getAttribute('data-tab')); }));
+    renderTab('vowels'); // initial
+
+    // Insertion logic: simple smart behavior
+    function insertChar(ch){
+      // append the character — Unicode shaping will combine consonant+matra in rendering
+      const start = ta.selectionStart; const end = ta.selectionEnd;
+      const before = ta.value.slice(0,start); const after = ta.value.slice(end);
+      ta.value = before + ch + after;
+      const newPos = start + ch.length; ta.selectionStart = ta.selectionEnd = newPos; ta.dispatchEvent(new Event('input'));
+    }
+
+    function backspace(){
+      const start = ta.selectionStart; const end = ta.selectionEnd;
+      if(start!==end){ // delete selected
+        const before = ta.value.slice(0,start); const after = ta.value.slice(end); ta.value = before + after; ta.selectionStart = ta.selectionEnd = start; ta.dispatchEvent(new Event('input')); return;
+      }
+      if(start===0) return;
+      // remove previous Unicode codepoint (naive: remove last UTF-16 code unit or combine sequence)
+      // We'll remove one Unicode scalar by using codePoint awareness
+      const s = ta.value;
+      const before = s.slice(0,start);
+      const after = s.slice(end);
+      // remove last codepoint
+      const newBefore = removeLastCodePoint(before);
+      const newPos = newBefore.length;
+      ta.value = newBefore + after; ta.selectionStart = ta.selectionEnd = newPos; ta.dispatchEvent(new Event('input'));
+    }
+
+    function removeLastCodePoint(str){
+      if(str.length===0) return '';
+      // handle surrogate pairs
+      const cpArr = Array.from(str); // splits by Unicode codepoints
+      cpArr.pop();
+      return cpArr.join('');
+    }
+
+    // Try sample
+    ta.value = 'नमस्ते दुनिया'; ta.dispatchEvent(new Event('input'));
+  </script>
+</body>
+</html>
